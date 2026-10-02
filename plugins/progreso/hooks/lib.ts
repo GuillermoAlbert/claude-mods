@@ -105,3 +105,25 @@ export const fromTodos = (
     }
     return setStatus({ ...old, id: `todo-${i}`, subject: t.content }, t.status, now)
   })
+
+// "claude-sonnet-5-5" → "Sonnet"
+export const modelName = (id: string): string => {
+  const k = id.toLowerCase()
+  for (const n of ['fable', 'mythos', 'opus', 'sonnet', 'haiku']) {
+    if (k.includes(n)) return n[0]!.toUpperCase() + n.slice(1)
+  }
+  return id
+}
+
+// { a1: 'claude-sonnet-5-5', a2: 'claude-sonnet-5-5', a3: 'claude-opus-5-5' } → "3 subagentes: 2 Sonnet, Opus"
+export const agentsLabel = (agents: Readonly<Record<string, string>>): string => {
+  const ids = Object.keys(agents)
+  if (ids.length === 0) return ''
+  const counts = new Map<string, number>()
+  for (const id of ids) {
+    const n = modelName(agents[id]!)
+    counts.set(n, (counts.get(n) ?? 0) + 1)
+  }
+  const parts = [...counts].map(([n, c]) => (c > 1 ? `${c} ${n}` : n))
+  return `${ids.length} subagente${ids.length > 1 ? 's' : ''}: ${parts.join(', ')}`
+}

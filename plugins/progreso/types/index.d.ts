@@ -13,7 +13,7 @@ declare module 'claude-code' {
     progreso: {
       tasks: ProgresoTask[]
       planStartedAt: number | null
-      agents: number
+      agents: Record<string, string>
       waiting: boolean
       now: number
       hidden: boolean

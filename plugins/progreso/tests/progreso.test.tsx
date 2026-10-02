@@ -1,7 +1,7 @@
 import { describe, expect, mock, test } from 'claude-code/testing'
 
 import type { ProgresoTask } from '../types'
-import { estimate, fromTodos, numbering, progress, range } from '../hooks/lib'
+import { agentsLabel, estimate, fromTodos, numbering, progress, range } from '../hooks/lib'
 
 const MIN = 60_000
 
@@ -55,6 +55,14 @@ describe('lib', () => {
     // 1 pendiente (10) + lo que queda de la actual (8) = 18 min → 12.6–25.2
     expect(range(r)).toBe('13–25 min')
     expect(estimate([{ id: '1', subject: 'a', status: 'pending' }], 0)).toBe(null)
+  })
+
+  test('resume los subagentes por modelo', () => {
+    expect(agentsLabel({})).toBe('')
+    expect(agentsLabel({ a: 'claude-opus-5-5' })).toBe('1 subagente: Opus')
+    expect(
+      agentsLabel({ a: 'claude-sonnet-5-5', b: 'claude-sonnet-5-5', c: 'claude-fable-5-1' }),
+    ).toBe('3 subagentes: 2 Sonnet, Fable')
   })
 
   test('TodoWrite conserva los tiempos de cada tarea', () => {

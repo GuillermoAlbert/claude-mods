@@ -1,0 +1,15 @@
+{
+  "name": "subagentes",
+  "version": "0.1.0",
+  "description": "Los subagentes genéricos usan Sonnet por defecto, salvo que Claude elija otro modelo",
+  "author": { "name": "Guillermo Albert" },
+  "userConfig": {
+    "modelo": {
+      "type": "string",
+      "title": "Modelo por defecto de los subagentes",
+      "description": "Solo cuando Claude no elige modelo y el subagente es genérico (los tipos con modelo propio se respetan)",
+      "default": "sonnet",
+      "options": ["sonnet", "haiku", "opus", "fable"]
+    }
+  }
+}

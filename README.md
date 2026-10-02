@@ -11,6 +11,7 @@ Mods para Claude Code: plugins de *function hooks* en TypeScript que se ejecutan
 | [traspaso](#traspaso) | Documento de traspaso y prompt para seguir antes de quedarse sin contexto, cuota o caché; avisos al móvil |
 | [progreso](#progreso) | Fase del plan, barra por fases, subagentes, tiempo y estimación |
 | [escudo](#escudo) | Oculta a Claude DNI, NIE, IBAN, teléfonos, emails y claves |
+| [subagentes](#subagentes) | Sonnet por defecto para los subagentes, salvo que Claude elija otro |
 
 ## Instalar y actualizar
 
@@ -93,13 +94,14 @@ Consejo: añade `.claude/traspasos/` a tu `.gitignore` global si no quieres que 
 Cuando Claude trabaja con una lista de tareas, aparece encima del prompt:
 
 ```
-Fase 4.2 / 9 ▓▓▓│▓▓▓│▓▓▓│▓▒░│░░░…  12/27 · 1h12 · quedan ~40–75 min · 2 subagentes · ⏸ esperando tu respuesta
-▸ 4.2 Migrar los repositorios JPA
+Fase 4.2 / 9 ▓▓▓│▓▓▓│▓▓▓│▓▒░│░░░…  12/27 · 1h12 · quedan ~40–75 min · ⏸ esperando tu respuesta
+▸ 4.2 Migrar los repositorios JPA  · 3 subagentes: 2 Sonnet, Opus
 ```
 
 - Si las tareas empiezan por número (`4.2 …`, `Fase 3: …`) se agrupan por fases; si no, cuenta tareas.
 - La estimación sale de lo que han tardado las tareas terminadas y se muestra como rango.
 - `/progreso` abre un panel con todas las tareas y su tiempo; `/progreso ocultar`, `mostrar` y `reiniciar`.
+- La segunda línea muestra la tarea en curso y los subagentes en marcha con el modelo real de cada uno.
 - La banda desaparece 10 minutos después de terminar el plan.
 
 ## escudo
@@ -122,6 +124,19 @@ Cuando Claude ejecuta algo con un falso (un `grep`, una edición, un comando), e
 - `/escudo` dice cuántos datos ha ocultado. Cada tipo se puede desactivar en `/config`.
 
 Para máxima seguridad, trabaja con datos anonimizados en desarrollo y deja el escudo como segunda barrera.
+
+## subagentes
+
+Cuando Claude lanza un subagente genérico sin elegir modelo, se usa Sonnet (gasta bastante menos cuota que Opus). Si Claude elige Opus, Fable u otro, se respeta; los tipos de subagente con modelo propio en su definición, también. El modelo por defecto se cambia en `/config`.
+
+Para que Claude elija bien cuándo subir de modelo, añade a tu `~/.claude/CLAUDE.md`:
+
+```markdown
+## Subagentes
+- Por defecto, Sonnet.
+- Opus para interfaz (UI/UX), seguridad, migraciones de datos, concurrencia y cambios difíciles de deshacer.
+- La revisión final de un plan largo, con Fable; si no está disponible, con Opus.
+```
 
 ## Desarrollo
 

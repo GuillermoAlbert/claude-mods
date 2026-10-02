@@ -2,11 +2,11 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
 import type { ProgresoTask } from '../types'
-import { estimate, fromTodos, minutes, progress, range, setStatus } from './lib'
+import { agentsLabel, estimate, fromTodos, minutes, progress, range, setStatus } from './lib'
 
 const tasks = atom({ plugin: 'progreso', key: 'tasks' } as const, [])
 const planStartedAt = atom({ plugin: 'progreso', key: 'planStartedAt' } as const, null)
-const agents = atom({ plugin: 'progreso', key: 'agents' } as const, 0)
+const agents = atom({ plugin: 'progreso', key: 'agents' } as const, {})
 const waiting = atom({ plugin: 'progreso', key: 'waiting' } as const, false)
 const now = atom({ plugin: 'progreso', key: 'now' } as const, 0)
 const hidden = atom({ plugin: 'progreso', key: 'hidden' } as const, false)
@@ -101,14 +101,17 @@ export const register: Register = on => {
     return ran
   })
 
-  // Subagentes en marcha
-  on('tool.call', { tool: 'Agent' }, async ($, e, next) => {
-    await update($, agents, n => n + 1)
-    try {
-      return await next(e)
-    } finally {
-      await update($, agents, n => Math.max(0, n - 1))
+  // Subagentes en marcha y el modelo con el que corre cada uno (el ya resuelto)
+  on('turn.complete', async ($, e, next) => {
+    const done = await next(e)
+    const id = e.agentId
+    if (id !== undefined) {
+      await update($, agents, map => {
+        const { [id]: _gone, ...rest } = map
+        return rest
+      })
     }
+    return done
   })
 
   // Esperando una respuesta o un permiso tuyo
@@ -122,6 +125,11 @@ export const register: Register = on => {
   })
   on('turn.step', async function* ($, e, next) {
     await update($, waiting, () => false)
+    const id = e.agentId
+    if (id !== undefined) {
+      const model = e.model
+      await update($, agents, map => (map[id] === model ? map : { ...map, [id]: model }))
+    }
     return yield* next(e)
   })
 
@@ -136,7 +144,7 @@ export const register: Register = on => {
     const p = progress(list)
     const started = await read($, planStartedAt)
     const eta = estimate(list, t)
-    const nAgents = await read($, agents)
+    const agentsText = agentsLabel(await read($, agents))
     const isWaiting = await read($, waiting)
     const { Box, Text } = $.ui.resolve(e)
 
@@ -166,12 +174,19 @@ export const register: Register = on => {
             {started !== null ? ` · ${minutes(t - started)}` : ''}
             {eta ? ` · quedan ~${range(eta)}` : p.done < p.total ? ' · estimando…' : ' · terminado'}
           </Text>
-          {nAgents > 0 && <Text color="cyan"> · {nAgents} subagente{nAgents > 1 ? 's' : ''}</Text>}
           {isWaiting && <Text color="red"> · ⏸ esperando tu respuesta</Text>}
         </Text>
-        {p.current && p.current.status === 'in_progress' && (
-          <Text dimColor wrap="truncate-end">
-            ▸ {p.current.subject}
+        {((p.current && p.current.status === 'in_progress') || agentsText !== '') && (
+          <Text wrap="truncate-end">
+            {p.current && p.current.status === 'in_progress' && (
+              <Text dimColor>▸ {p.current.subject}</Text>
+            )}
+            {agentsText !== '' && (
+              <Text color="cyan">
+                {p.current && p.current.status === 'in_progress' ? '  · ' : ''}
+                {agentsText}
+              </Text>
+            )}
           </Text>
         )}
         {below}

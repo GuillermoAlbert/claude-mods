@@ -1,6 +1,8 @@
 {
   "name": "claude-mods",
-  "owner": { "name": "Guillermo Albert" },
+  "owner": {
+    "name": "Guillermo Albert"
+  },
   "description": "Mods de Claude Code de Guillermo",
   "plugins": [
     {
@@ -27,6 +29,11 @@
       "name": "escudo",
       "source": "./plugins/escudo",
       "description": "Oculta a Claude DNI, NIE, IBAN, teléfonos, emails y claves cambiándolos por falsos válidos, y los restaura al ejecutar"
+    },
+    {
+      "name": "subagentes",
+      "source": "./plugins/subagentes",
+      "description": "Los subagentes genéricos usan Sonnet por defecto, salvo que Claude elija otro modelo"
     }
   ]
 }
