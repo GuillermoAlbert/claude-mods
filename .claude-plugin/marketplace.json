@@ -1,0 +1,12 @@
+{
+  "name": "claude-mods",
+  "owner": { "name": "Guillermo Albert" },
+  "description": "Mods de Claude Code de Guillermo",
+  "plugins": [
+    {
+      "name": "centinela",
+      "source": "./plugins/centinela",
+      "description": "Banda sobre el prompt con el uso de la sesión de 5 h, la semana, otros límites, el contexto y la cuenta atrás de la caché"
+    }
+  ]
+}
