@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'claude-code/testing'
+import { describe, expect, mock, test } from 'claude-code/testing'
 
 import { cacheState, clock, newWarnings, span, ttlMs } from '../hooks/lib'
 
@@ -60,6 +60,7 @@ const beneath = (on: any, toasts: string[] = []) => {
 describe('banda', () => {
   test('muestra límites y contexto en terminal y escritorio', async ($, on) => {
     beneath(on)
+    mock.clock(on)
     await $.session.measure({
       context: { window: 200_000, tokens: 108_000, percent: 54 },
       rateLimits: [...LIMITS, { kind: 'spend_limit', percentUsed: 85 }],
@@ -86,6 +87,7 @@ describe('banda', () => {
 
   test('compacta sin barras en pantallas estrechas', async ($, on) => {
     beneath(on)
+    mock.clock(on)
     await $.session.measure({
       context: { window: 200_000, percent: 10 },
       rateLimits: LIMITS,
@@ -116,5 +118,25 @@ describe('banda', () => {
       changed: ['rateLimits'],
     })
     expect(toasts).toEqual(['Sesión al 83%'])
+  })
+
+  test('el reloj sigue corriendo con la sesión parada', async ($, on) => {
+    beneath(on)
+    const clock = mock.clock(on, { now: Date.parse('2026-10-02T08:00:00Z') })
+    await $.session.measure({
+      context: { window: 200_000 },
+      rateLimits: [{ kind: 'five_hour', percentUsed: 10, resetsAt: '2026-10-02T10:00:00Z' }],
+      changed: ['rateLimits'],
+    })
+    const ui = await $.ui.mount({
+      plugin: 'centinela',
+      surface: 'terminal',
+      component: 'AbovePrompt',
+      props: props(140),
+    })
+    expect((await ui.find({ type: 'Text', text: /Sesión/ }))?.text).toMatch(/↻2h00/)
+    await clock.advance(30 * 60_000)
+    expect((await ui.find({ type: 'Text', text: /Sesión/ }))?.text).toMatch(/↻1h30/)
+    await ui.unmount()
   })
 })

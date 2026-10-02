@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { Register, SessionRateLimit } from 'claude-code'
+import type { EngineInterface, Register, SessionRateLimit } from 'claude-code'
 
 import type { CentinelaSnapshot } from '../types'
 import {
@@ -19,7 +19,18 @@ const now = atom({ plugin: 'centinela', key: 'now' } as const, 0)
 const warned = atom({ plugin: 'centinela', key: 'warned' } as const, [])
 const hidden = atom({ plugin: 'centinela', key: 'hidden' } as const, false)
 
-const TICK_MS = 5_000
+const TICK_MS = 1_000
+
+// El reloj de la banda: se arranca desde el primer hook que llegue (un
+// /reload-plugins no vuelve a lanzar session.start) y sigue con la sesión parada.
+let ticking = false
+function ensureTicker($: EngineInterface) {
+  if (ticking) return
+  ticking = true
+  $.clock.every(TICK_MS, () => {
+    void $.clock.now().then(ms => update($, now, () => ms))
+  })
+}
 
 const toSnapshot = (
   limits: SessionRateLimit[],
@@ -33,6 +44,7 @@ export const register: Register = (on, options) => {
   const ttlSetting = String(options.cacheTtl ?? 'auto')
   const avisos = options.avisos !== false
 
+
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'centinela',
@@ -42,13 +54,12 @@ export const register: Register = (on, options) => {
     await update($, snap, () => toSnapshot(usage.rateLimits, usage.context.percent))
     const t = await $.clock.now()
     await update($, now, () => t)
-    $.clock.every(TICK_MS, () => {
-      void $.clock.now().then(ms => update($, now, () => ms))
-    })
+    ensureTicker($)
     return next(e)
   })
 
   on('command.run', { command: 'centinela' }, async $ => {
+    ensureTicker($)
     const isHidden = await update($, hidden, h => !h)
     return { text: isHidden ? 'Banda de centinela oculta.' : 'Banda de centinela visible.' }
   })
@@ -56,6 +67,7 @@ export const register: Register = (on, options) => {
   // Cada petición del hilo principal lee o escribe la caché: reinicia el reloj
   on('turn.step', async function* ($, e, next) {
     const result = yield* next(e)
+    ensureTicker($)
     if (!e.agentId) {
       const t = await $.clock.now()
       await update($, lastStepAt, () => t)
@@ -65,6 +77,7 @@ export const register: Register = (on, options) => {
   })
 
   on('session.measure', async ($, e, next) => {
+    ensureTicker($)
     const s = toSnapshot(e.rateLimits, e.context.percent)
     await update($, snap, () => s)
     if (avisos) {
@@ -81,7 +94,8 @@ export const register: Register = (on, options) => {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.props.hasSurvey || (await read($, hidden))) return next(e)
     const s = await read($, snap)
-    const t = await read($, now)
+    await read($, now) // suscribe la banda al tic del reloj
+    const t = await $.clock.now()
     const last = await read($, lastStepAt)
     const limits = order(s?.limits ?? [])
     const ctx = s?.contextPercent ?? null
