@@ -9,6 +9,7 @@ import {
   levelColor,
   newWarnings,
   order,
+  resetClock,
   span,
   ttlMs,
 } from './lib'
@@ -43,6 +44,7 @@ const toSnapshot = (
 export const register: Register = (on, options) => {
   const ttlSetting = String(options.cacheTtl ?? 'auto')
   const avisos = options.avisos !== false
+  const zona = String(options.zona ?? 'Europe/Madrid')
 
 
   on('session.start', async ($, e, next) => {
@@ -111,13 +113,19 @@ export const register: Register = (on, options) => {
     const parts = []
 
     for (const l of limits) {
-      const left = l.resetsAt ? Date.parse(l.resetsAt) - t : NaN
+      const resetMs = l.resetsAt ? Date.parse(l.resetsAt) : NaN
+      const left = resetMs - t
       parts.push(
         <Text>
           <Text dimColor>{label(l.kind)} </Text>
           {width > 0 && <Text color={levelColor(l.percentUsed)}>{bar(l.percentUsed, width)} </Text>}
           <Text color={levelColor(l.percentUsed)}>{Math.round(l.percentUsed)}%</Text>
-          {Number.isFinite(left) && left > 0 && <Text dimColor> ↻{span(left)}</Text>}
+          {Number.isFinite(left) && left > 0 && (
+            <Text dimColor>
+              {' '}↻{resetClock(resetMs, t, zona)}
+              {l.kind === 'five_hour' && width > 0 ? ` (${span(left)})` : ''}
+            </Text>
+          )}
         </Text>,
       )
     }

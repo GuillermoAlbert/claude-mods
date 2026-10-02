@@ -37,10 +37,10 @@ Los ajustes de cada mod están en `/config` dentro de Claude Code.
 Una banda encima del prompt:
 
 ```
-Sesión ▓▓▓▓▓░░░ 62% ↻2h05 · Semana ▓▓░░░░░░ 31% ↻3d 4h · Fable ▓░░░░░░░ 18% · Ctx ▓▓▓▓░░░░ 54% · ● caché 41:20
+Sesión ▓▓▓▓▓░░░ 62% ↻10:48 (2h05) · Semana ▓▓░░░░░░ 31% ↻vie 08:00 · Fable ▓░░░░░░░ 18% · Ctx ▓▓▓▓░░░░ 54% · ● caché 41:20
 ```
 
-- Límites de la cuenta (sesión de 5 h, semana y cualquier otro que informe, como Fable) con barra, porcentaje y tiempo hasta el reinicio. Verde < 70 %, ámbar < 90 %, rojo a partir de ahí.
+- Límites de la cuenta (sesión de 5 h, semana y cualquier otro que informe, como Fable) con barra, porcentaje y hora de reinicio en hora de España (la sesión de 5 h también con lo que falta; si es otro día, con el día de la semana). Verde < 70 %, ámbar < 90 %, rojo a partir de ahí.
 - Contexto ocupado y semáforo de caché: cuenta atrás desde la última respuesta, ámbar en el último 25 % y rojo cuando caduca.
 - Avisos al pasar del 80 % y del 95 % de cada límite. `/centinela` muestra u oculta la banda.
 
@@ -48,6 +48,7 @@ Sesión ▓▓▓▓▓░░░ 62% ↻2h05 · Semana ▓▓░░░░░░ 
 | --- | --- |
 | `cacheTtl` (`auto`, `1h`, `5m`) | `auto`: 1 h con suscripción; 5 min sin límites de suscripción o con la sesión agotada |
 | `avisos` | sí |
+| `zona` | `Europe/Madrid` |
 
 ## dieta
 

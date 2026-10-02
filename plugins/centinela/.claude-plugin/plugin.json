@@ -1,6 +1,6 @@
 {
   "name": "centinela",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Banda sobre el prompt con el uso de la sesión de 5 h, la semana, otros límites, el contexto y la cuenta atrás de la caché",
   "author": {
     "name": "Guillermo Albert"
@@ -23,6 +23,12 @@
       "title": "Avisos al 80% y 95%",
       "description": "Muestra un aviso cuando un límite pasa del 80% y del 95%",
       "default": true
+    },
+    "zona": {
+      "type": "string",
+      "title": "Zona horaria de las horas de reinicio",
+      "description": "Nombre IANA, por ejemplo Europe/Madrid o Atlantic/Canary",
+      "default": "Europe/Madrid"
     }
   }
 }

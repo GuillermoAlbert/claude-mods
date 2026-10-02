@@ -1,6 +1,6 @@
 import { describe, expect, mock, test } from 'claude-code/testing'
 
-import { cacheState, clock, newWarnings, span, ttlMs } from '../hooks/lib'
+import { cacheState, clock, newWarnings, resetClock, span, ttlMs } from '../hooks/lib'
 
 const props = (bodyColumns: number, isWorking = false) => ({
   hasSurvey: false,
@@ -39,6 +39,14 @@ describe('lib', () => {
     expect(span(45 * 60_000)).toBe('45m')
     expect(span((3 * 24 + 4) * 3_600_000)).toBe('3d 4h')
     expect(clock(65 * 60_000)).toBe('1:05:00')
+  })
+
+  test('hora de reinicio en hora de España', () => {
+    const now = Date.parse('2026-10-02T06:52:00Z') // vie 08:52 en Madrid
+    expect(resetClock(Date.parse('2026-10-02T08:48:00Z'), now, 'Europe/Madrid')).toBe('10:48')
+    expect(resetClock(Date.parse('2026-10-09T06:00:00Z'), now, 'Europe/Madrid')).toBe('vie 08:00')
+    // invierno: UTC+1
+    expect(resetClock(Date.parse('2026-12-02T08:48:00Z'), Date.parse('2026-12-02T07:00:00Z'), 'Europe/Madrid')).toBe('09:48')
   })
 
   test('avisos una sola vez por umbral y reinicio', () => {
@@ -135,9 +143,9 @@ describe('banda', () => {
       component: 'AbovePrompt',
       props: props(140),
     })
-    expect((await ui.find({ type: 'Text', text: /Sesión/ }))?.text).toMatch(/↻2h00/)
+    expect((await ui.find({ type: 'Text', text: /Sesión/ }))?.text).toMatch(/↻12:00 \(2h00\)/)
     await clock.advance(30 * 60_000)
-    expect((await ui.find({ type: 'Text', text: /Sesión/ }))?.text).toMatch(/↻1h30/)
+    expect((await ui.find({ type: 'Text', text: /Sesión/ }))?.text).toMatch(/↻12:00 \(1h30\)/)
     await ui.unmount()
   })
 })

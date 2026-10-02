@@ -92,3 +92,27 @@ export const newWarnings = (
   }
   return out
 }
+
+// Hora local de un reinicio: "10:48" si es hoy, "vie 10:48" si es otro día
+export const resetClock = (resetMs: number, nowMs: number, timeZone: string): string => {
+  try {
+    const fmt = (ms: number) => {
+      const parts = new Intl.DateTimeFormat('es-ES', {
+        timeZone,
+        weekday: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      }).formatToParts(new Date(ms))
+      const get = (t: string) => parts.find(p => p.type === t)?.value ?? ''
+      return { day: get('day'), weekday: get('weekday').replace('.', ''), hm: `${get('hour')}:${get('minute')}` }
+    }
+    const r = fmt(resetMs)
+    const isToday = r.day === fmt(nowMs).day && resetMs - nowMs < 86_400_000
+    return isToday ? r.hm : `${r.weekday} ${r.hm}`
+  } catch {
+    const d = new Date(resetMs)
+    return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')} UTC`
+  }
+}
