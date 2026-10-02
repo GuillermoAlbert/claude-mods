@@ -6,9 +6,14 @@ import {
   agentsLabel,
   estimate,
   fromTodos,
+  isLedgerPath,
   isPlanPath,
+  ledgerItems,
+  ledgerRoot,
   minutes,
+  parseLedger,
   parsePlan,
+  planTaskTitles,
   planToTasks,
   progress,
   range,
@@ -126,24 +131,38 @@ export const register: Register = on => {
       return ran
     }
     const path = (e as { file_path?: unknown }).file_path
-    if (typeof path !== 'string' || !isPlanPath(path)) return ran
-    let md: string
+    if (typeof path !== 'string') return ran
+    const isLedger = isLedgerPath(path)
+    if (!isLedger && !isPlanPath(path)) return ran
+    let items
     try {
-      md = await $.fs.read(path)
+      if (isLedger) {
+        // superpowers (subagent-driven-development): el registro manda
+        const ledger = parseLedger(await $.fs.read(path))
+        if (!ledger.planPath) return ran
+        const planPath = ledger.planPath.startsWith('/')
+          ? ledger.planPath
+          : `${ledgerRoot(path)}/${ledger.planPath}`
+        items = ledgerItems(planTaskTitles(await $.fs.read(planPath)), ledger.complete)
+      } else {
+        items = parsePlan(await $.fs.read(path))
+      }
     } catch {
       return ran
     }
-    const items = parsePlan(md)
     if (items.length < 2) return ran
     const t = await $.clock.now()
     const list = await read($, tasks)
     const src = await read($, fuente)
-    const isOurs = src === `plan:${path}`
+    const key = isLedger ? `sdd:${path}` : `plan:${path}`
+    const isOurs = src === key
     if (src === 'tareas' && !isPlanOver(list, t)) return ran
+    // con un registro de superpowers activo, leer el plan no cambia nada
+    if (!isLedger && src?.startsWith('sdd:') && !isPlanOver(list, t)) return ran
     if (!isOurs && tool === 'Read' && src !== null && !isPlanOver(list, t)) return ran
     await touchPlan($)
     if (!isOurs) await update($, planStartedAt, () => t)
-    await update($, fuente, () => `plan:${path}`)
+    await update($, fuente, () => key)
     await update($, tasks, prev => planToTasks(items, isOurs ? prev : [], t))
     return ran
   })

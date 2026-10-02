@@ -5,9 +5,13 @@ import {
   agentsLabel,
   estimate,
   fromTodos,
+  isLedgerPath,
   isPlanPath,
+  ledgerItems,
+  parseLedger,
   numbering,
   parsePlan,
+  planTaskTitles,
   planToTasks,
   progress,
   range,
@@ -98,6 +102,22 @@ describe('lib', () => {
     expect(later[3]!.status).toBe('in_progress')
     expect(isPlanPath('/r/docs/superpowers/plans/2026-10-01-bot.md')).toBe(true)
     expect(isPlanPath('/r/README.md')).toBe(false)
+  })
+
+  test('lee el registro de superpowers', () => {
+    const ledger = '# SDD ledger — plan: docs/superpowers/plans/bot.md\nTask 1: complete (commits a1..b2, review clean)\nTask 2: fix round 1/5 (2 addressed, 1 open)\n'
+    const l = parseLedger(ledger)
+    expect(l.planPath).toBe('docs/superpowers/plans/bot.md')
+    expect([...l.complete]).toEqual([1])
+    const titles = planTaskTitles('# Plan\n### Task 1: Modelo\n- [ ] x\n### Task 2: API\n### Task 3: Docs\n')
+    expect(titles).toEqual([
+      { n: 1, title: 'Modelo' },
+      { n: 2, title: 'API' },
+      { n: 3, title: 'Docs' },
+    ])
+    const tasks = planToTasks(ledgerItems(titles, l.complete), [], 0)
+    expect(progress(tasks).label).toBe('Tarea 2 / 3')
+    expect(isLedgerPath('/r/.superpowers/sdd/bot/progress.md')).toBe(true)
   })
 
   test('TodoWrite conserva los tiempos de cada tarea', () => {

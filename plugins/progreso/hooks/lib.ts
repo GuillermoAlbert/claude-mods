@@ -188,3 +188,31 @@ export const planToTasks = (
 }
 
 export const isPlanPath = (path: string): boolean => /\.md$/i.test(path) && /(^|[\/])(plans?|planes?|tasks?)([\/]|[-_.])/i.test(path)
+
+// ---------- superpowers: subagent-driven-development ----------
+// Plan: "### Task N: Nombre" · Ledger: <repo>/.superpowers/sdd/<plan>/progress.md
+// con "# SDD ledger — plan: <ruta>" y líneas "Task N: complete …"
+
+export const isLedgerPath = (path: string): boolean =>
+  /[\\/]\.superpowers[\\/]sdd[\\/][^\\/]+[\\/]progress\.md$/.test(path)
+
+export const ledgerRoot = (path: string): string => path.split(/[\\/]\.superpowers[\\/]/)[0]!
+
+export const parseLedger = (md: string): { planPath: string | null; complete: Set<number> } => {
+  const plan = /^#\s*SDD ledger\s*[—-]+\s*plan:\s*(.+?)\s*$/im.exec(md)
+  const complete = new Set<number>()
+  for (const m of md.matchAll(/^\s*[-*]?\s*Task\s+(\d+)\s*:\s*complete\b/gim)) complete.add(Number(m[1]))
+  return { planPath: plan ? plan[1]!.replace(/^`|`$/g, '') : null, complete }
+}
+
+export const planTaskTitles = (md: string): { n: number; title: string }[] =>
+  [...md.matchAll(/^#{2,4}\s+Task\s+(\d+)\s*[:.\-–]\s*(.+?)\s*$/gim)].map(m => ({
+    n: Number(m[1]),
+    title: m[2]!.replace(/\*\*|`/g, ''),
+  }))
+
+export const ledgerItems = (
+  titles: readonly { n: number; title: string }[],
+  complete: ReadonlySet<number>,
+): PlanItem[] =>
+  titles.map(t => ({ phase: 1, step: t.n, text: `Task ${t.n}: ${t.title}`, done: complete.has(t.n) }))
