@@ -127,16 +127,13 @@ Para máxima seguridad, trabaja con datos anonimizados en desarrollo y deja el e
 
 ## subagentes
 
-Cuando Claude lanza un subagente genérico sin elegir modelo, se usa Sonnet (gasta bastante menos cuota que Opus). Si Claude elige Opus, Fable u otro, se respeta; los tipos de subagente con modelo propio en su definición, también. El modelo por defecto se cambia en `/config`.
+- Cuando Claude lanza un subagente genérico sin elegir modelo, se usa Sonnet (gasta bastante menos cuota que Opus). Si Claude elige otro, se respeta; los tipos de subagente con modelo propio, también.
+- El propio mod le explica a Claude la regla, sin tocar tu `CLAUDE.md`: Sonnet por defecto; Opus para interfaz, seguridad, migraciones de datos, concurrencia, arquitectura y cambios difíciles de deshacer; la revisión final de un plan largo con Fable, o con Opus si Fable no está disponible.
 
-Para que Claude elija bien cuándo subir de modelo, añade a tu `~/.claude/CLAUDE.md`:
-
-```markdown
-## Subagentes
-- Por defecto, Sonnet.
-- Opus para interfaz (UI/UX), seguridad, migraciones de datos, concurrencia y cambios difíciles de deshacer.
-- La revisión final de un plan largo, con Fable; si no está disponible, con Opus.
-```
+| Ajuste | Por defecto |
+| --- | --- |
+| `modelo` (`sonnet`, `haiku`, `opus`, `fable`) | `sonnet` |
+| `instrucciones` (explicar la regla a Claude) | sí |
 
 ## Desarrollo
 

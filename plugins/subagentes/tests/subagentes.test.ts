@@ -22,3 +22,19 @@ test('el modelo por defecto se puede cambiar', { options: { modelo: 'haiku' } },
   await $.tool.call({ tool: 'Agent', description: 'd', prompt: 'p' })
   expect(seen).toEqual(['haiku'])
 })
+
+const BASE = { sections: [{ id: 'base', text: 'x', scope: 'shared' as const }] }
+
+test('añade la regla al prompt de la sesión que lanza subagentes', async ($, on) => {
+  on('prompt.compose', () => BASE)
+  const main = await $.prompt.compose({ model: 'm', promptModel: 'm', surfaces: [], outputStyle: null, traits: [], tools: ['Agent', 'Bash'] } as never)
+  expect(main.sections.map(s => s.id)).toEqual(['base', 'subagentes:modelos'])
+  const sub = await $.prompt.compose({ model: 'm', promptModel: 'm', surfaces: [], outputStyle: null, traits: [], tools: ['Bash'] } as never)
+  expect(sub.sections.map(s => s.id)).toEqual(['base'])
+})
+
+test('la regla se puede desactivar', { options: { instrucciones: false } }, async ($, on) => {
+  on('prompt.compose', () => BASE)
+  const main = await $.prompt.compose({ model: 'm', promptModel: 'm', surfaces: [], outputStyle: null, traits: [], tools: ['Agent'] } as never)
+  expect(main.sections.map(s => s.id)).toEqual(['base'])
+})

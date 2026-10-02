@@ -33,7 +33,7 @@
     {
       "name": "subagentes",
       "source": "./plugins/subagentes",
-      "description": "Los subagentes genéricos usan Sonnet por defecto, salvo que Claude elija otro modelo"
+      "description": "Los subagentes usan Sonnet por defecto; Claude recibe la regla para elegir Opus o Fable cuando toca"
     }
   ]
 }

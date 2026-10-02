@@ -1,15 +1,28 @@
 {
   "name": "subagentes",
-  "version": "0.1.0",
-  "description": "Los subagentes genéricos usan Sonnet por defecto, salvo que Claude elija otro modelo",
-  "author": { "name": "Guillermo Albert" },
+  "version": "0.2.0",
+  "description": "Los subagentes usan Sonnet por defecto; Claude recibe la regla para elegir Opus o Fable cuando toca",
+  "author": {
+    "name": "Guillermo Albert"
+  },
   "userConfig": {
     "modelo": {
       "type": "string",
       "title": "Modelo por defecto de los subagentes",
       "description": "Solo cuando Claude no elige modelo y el subagente es genérico (los tipos con modelo propio se respetan)",
       "default": "sonnet",
-      "options": ["sonnet", "haiku", "opus", "fable"]
+      "options": [
+        "sonnet",
+        "haiku",
+        "opus",
+        "fable"
+      ]
+    },
+    "instrucciones": {
+      "type": "boolean",
+      "title": "Explicar a Claude cuándo usar Opus y Fable",
+      "description": "Añade la regla de modelos al prompt de sistema, sin tocar tu CLAUDE.md",
+      "default": true
     }
   }
 }
