@@ -1,0 +1,27 @@
+{
+  "name": "dieta",
+  "version": "0.1.0",
+  "description": "Evita que el contexto se infle: frena lecturas de archivos enormes y recorta salidas gigantes de comandos",
+  "author": { "name": "Guillermo Albert" },
+  "userConfig": {
+    "maxLecturaKB": {
+      "type": "number",
+      "title": "Tamaño máximo para leer un archivo entero (KB)",
+      "description": "Por encima, Claude tiene que leerlo por partes (offset/limit) o buscar con Grep. Si insiste, se le deja.",
+      "default": 100
+    },
+    "maxSalida": {
+      "type": "number",
+      "title": "Caracteres máximos de la salida de una herramienta",
+      "description": "Por encima se conserva el principio y el final y se omite el centro",
+      "default": 20000
+    },
+    "modo": {
+      "type": "string",
+      "title": "Qué hacer",
+      "description": "frenar: bloquea y recorta. avisar: solo muestra un aviso.",
+      "default": "frenar",
+      "options": ["frenar", "avisar"]
+    }
+  }
+}

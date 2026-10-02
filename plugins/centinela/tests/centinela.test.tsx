@@ -50,10 +50,11 @@ describe('lib', () => {
 })
 
 const beneath = (on: any, toasts: string[] = []) => {
+  on('ui.render', () => ({ type: 'Box', props: {}, children: [] }))
   on('session.measure', (_$: unknown, e: { changed: string[] }) => ({ changed: e.changed }))
   on('ui.toast', (_$: unknown, e: { text: string }) => {
     toasts.push(e.text)
-    return {}
+    return { value: undefined }
   })
 }
 

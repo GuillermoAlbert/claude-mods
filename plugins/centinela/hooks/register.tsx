@@ -92,7 +92,9 @@ export const register: Register = (on, options) => {
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    if (e.props.hasSurvey || (await read($, hidden))) return next(e)
+    // Lo que dibujan los demás mods (progreso…) va debajo de esta banda
+    const below = await next(e)
+    if (e.props.hasSurvey || (await read($, hidden))) return below
     const s = await read($, snap)
     await read($, now) // suscribe la banda al tic del reloj
     const t = await $.clock.now()
@@ -100,7 +102,7 @@ export const register: Register = (on, options) => {
     const limits = order(s?.limits ?? [])
     const ctx = s?.contextPercent ?? null
     const cache = cacheState(last, t, ttlMs(ttlSetting, limits), e.props.isWorking)
-    if (limits.length === 0 && ctx === null && cache === null) return next(e)
+    if (limits.length === 0 && ctx === null && cache === null) return below
 
     const { Box, Text } = $.ui.resolve(e)
     const cols = e.props.bodyColumns
@@ -138,10 +140,11 @@ export const register: Register = (on, options) => {
     }
 
     return (
-      <Box flexDirection="row">
+      <Box flexDirection="column">
         <Text wrap="truncate-end">
           {parts.flatMap((p, i) => (i === 0 ? [p] : [sep, p]))}
         </Text>
+        {below}
       </Box>
     )
   })

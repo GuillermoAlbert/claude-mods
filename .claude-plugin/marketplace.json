@@ -7,6 +7,26 @@
       "name": "centinela",
       "source": "./plugins/centinela",
       "description": "Banda sobre el prompt con el uso de la sesión de 5 h, la semana, otros límites, el contexto y la cuenta atrás de la caché"
+    },
+    {
+      "name": "dieta",
+      "source": "./plugins/dieta",
+      "description": "Evita que el contexto se infle: frena lecturas de archivos enormes y recorta salidas gigantes de comandos"
+    },
+    {
+      "name": "traspaso",
+      "source": "./plugins/traspaso",
+      "description": "Cierre ordenado antes de quedarse sin contexto, sin cuota o sin caché: documento de traspaso, prompt para seguir y aviso al móvil"
+    },
+    {
+      "name": "progreso",
+      "source": "./plugins/progreso",
+      "description": "Progreso del plan: fase actual, barra por fases, subagentes, tiempo transcurrido y estimación de lo que falta"
+    },
+    {
+      "name": "escudo",
+      "source": "./plugins/escudo",
+      "description": "Oculta a Claude DNI, NIE, IBAN, teléfonos, emails y claves cambiándolos por falsos válidos, y los restaura al ejecutar"
     }
   ]
 }

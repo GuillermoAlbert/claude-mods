@@ -1,0 +1,41 @@
+{
+  "name": "traspaso",
+  "version": "0.1.0",
+  "description": "Cierre ordenado antes de quedarse sin contexto, sin cuota o sin caché: escribe un documento de traspaso y el prompt para seguir en otra sesión, y avisa al móvil",
+  "author": {
+    "name": "Guillermo Albert"
+  },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "umbralContexto": {
+      "type": "number",
+      "title": "Contexto (%) a partir del que se hace el traspaso",
+      "default": 85,
+      "description": "Cuando la conversación ocupa este porcentaje de la ventana del modelo"
+    },
+    "umbralCuota": {
+      "type": "number",
+      "title": "Uso de un límite (%) a partir del que se hace el traspaso",
+      "description": "Sesión de 5 h, semana y demás límites de la cuenta",
+      "default": 95
+    },
+    "minutosInactivo": {
+      "type": "number",
+      "title": "Minutos esperando tu respuesta antes del traspaso",
+      "description": "Antes de que caduque la caché de 1 h. 0 lo desactiva.",
+      "default": 50
+    },
+    "ntfy": {
+      "type": "string",
+      "title": "Tema o URL de ntfy para avisos al móvil",
+      "description": "Por ejemplo guillermo-claude-x7k2 (usa https://ntfy.sh) o la URL completa de tu servidor ntfy. Vacío: sin avisos.",
+      "default": ""
+    },
+    "carpeta": {
+      "type": "string",
+      "title": "Carpeta de los traspasos, relativa al proyecto",
+      "default": ".claude/traspasos",
+      "description": "Ahí se guardan traspaso_<fecha>.md y ULTIMO.md"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "escudo",
+  "version": "0.1.0",
+  "description": "Oculta a Claude los datos personales (DNI, NIE, IBAN, teléfonos, emails, claves) cambiándolos por falsos válidos y los restaura al ejecutar, todo en tu máquina",
+  "author": { "name": "Guillermo Albert" },
+  "userConfig": {
+    "dni": {
+      "type": "boolean",
+      "title": "DNI y NIE",
+      "description": "Solo los que tienen la letra correcta",
+      "default": true
+    },
+    "iban": {
+      "type": "boolean",
+      "title": "IBAN españoles",
+      "description": "Solo los válidos; el falso conserva el código del banco",
+      "default": true
+    },
+    "telefono": {
+      "type": "boolean",
+      "title": "Teléfonos españoles",
+      "description": "9 cifras que empiezan por 6, 7, 8 o 9, con o sin +34; puede tapar algún número que no sea un teléfono",
+      "default": true
+    },
+    "email": {
+      "type": "boolean",
+      "title": "Emails",
+      "description": "Cambia la parte antes de la @ y conserva el dominio",
+      "default": true
+    },
+    "secretos": {
+      "type": "boolean",
+      "title": "Claves de API y tokens",
+      "description": "Anthropic, OpenAI, GitHub, AWS, Slack, Google, GitLab",
+      "default": true
+    }
+  }
+}
