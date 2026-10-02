@@ -127,3 +127,64 @@ export const agentsLabel = (agents: Readonly<Record<string, string>>): string =>
   const parts = [...counts].map(([n, c]) => (c > 1 ? `${c} ${n}` : n))
   return `${ids.length} subagente${ids.length > 1 ? 's' : ''}: ${parts.join(', ')}`
 }
+
+// ---------- planes en Markdown con casillas (- [ ] / - [x]) ----------
+
+export type PlanItem = { phase: number; step: number; text: string; done: boolean }
+
+const clean = (t: string) => t.replace(/\*\*|__|`/g, '').replace(/\s+/g, ' ').trim()
+
+// Cada encabezado con casillas debajo es una fase; cada casilla, un paso
+export const parsePlan = (md: string): PlanItem[] => {
+  const items: PlanItem[] = []
+  let phase = 0
+  let headingSeen = false
+  let step = 0
+  let pendingHeading = false
+  for (const line of md.split(/\r?\n/)) {
+    if (/^#{1,4}\s+\S/.test(line)) {
+      pendingHeading = true
+      continue
+    }
+    const m = /^\s*[-*+]\s+\[( |x|X)\]\s+(.*)$/.exec(line)
+    if (!m) continue
+    if (pendingHeading || !headingSeen) {
+      phase += 1
+      step = 0
+      headingSeen = true
+      pendingHeading = false
+    }
+    step += 1
+    items.push({ phase, step, text: clean(m[2]!), done: m[1] !== ' ' })
+  }
+  return items
+}
+
+// Convierte las casillas en tareas, conservando cuándo se marcó cada una
+export const planToTasks = (
+  items: readonly PlanItem[],
+  previous: readonly ProgresoTask[],
+  now: number,
+): ProgresoTask[] => {
+  const phased = new Set(items.map(i => i.phase)).size > 1
+  let current = false
+  return items.map(i => {
+    const id = `plan-${i.phase}.${i.step}`
+    const subject = phased ? `${i.phase}.${i.step} ${i.text}` : i.text
+    const old = previous.find(p => p.id === id)
+    if (i.done) {
+      if (old?.status === 'completed') return { ...old, subject }
+      // marcada mientras la seguíamos: cuenta para la estimación
+      if (old) return { id, subject, status: 'completed', startedAt: old.startedAt ?? now, doneAt: now }
+      // ya estaba marcada al abrir el plan: sin tiempos
+      return { id, subject, status: 'completed', doneAt: now }
+    }
+    if (!current) {
+      current = true
+      return { id, subject, status: 'in_progress', startedAt: old?.startedAt ?? now }
+    }
+    return { id, subject, status: 'pending' }
+  })
+}
+
+export const isPlanPath = (path: string): boolean => /\.md$/i.test(path) && /(^|[\/])(plans?|planes?|tasks?)([\/]|[-_.])/i.test(path)

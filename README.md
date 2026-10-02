@@ -91,7 +91,10 @@ Consejo: añade `.claude/traspasos/` a tu `.gitignore` global si no quieres que 
 
 ## progreso
 
-Cuando Claude trabaja con una lista de tareas, aparece encima del prompt:
+Cuando hay un plan en marcha, aparece encima del prompt. El plan sale de:
+
+- la lista de tareas de Claude (TaskCreate/TaskUpdate o TodoWrite), o
+- un plan en Markdown con casillas (`- [ ]` / `- [x]`) dentro de una carpeta `plans/` o similar (como `docs/superpowers/plans/…md`), que se sigue cuando Claude lo lee o lo edita. Cada encabezado con casillas es una fase y cada casilla, un paso.
 
 ```
 Fase 4.2 / 9 ▓▓▓│▓▓▓│▓▓▓│▓▒░│░░░…  12/27 · 1h12 · quedan ~40–75 min · ⏸ esperando tu respuesta
@@ -101,7 +104,7 @@ Fase 4.2 / 9 ▓▓▓│▓▓▓│▓▓▓│▓▒░│░░░…  12/27
 - Si las tareas empiezan por número (`4.2 …`, `Fase 3: …`) se agrupan por fases; si no, cuenta tareas.
 - La estimación sale de lo que han tardado las tareas terminadas y se muestra como rango.
 - `/progreso` abre un panel con todas las tareas y su tiempo; `/progreso ocultar`, `mostrar` y `reiniciar`.
-- La segunda línea muestra la tarea en curso y los subagentes en marcha con el modelo real de cada uno.
+- La segunda línea muestra la tarea en curso y los subagentes en marcha con el modelo real de cada uno. Los subagentes se ven aunque no haya plan.
 - La banda desaparece 10 minutos después de terminar el plan.
 
 ## escudo

@@ -17,6 +17,7 @@ declare module 'claude-code' {
       waiting: boolean
       now: number
       hidden: boolean
+      fuente: string | null
     }
   }
 }

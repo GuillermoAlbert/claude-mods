@@ -1,6 +1,6 @@
 {
   "name": "progreso",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Progreso del plan sobre el prompt: fase actual, barra por fases, subagentes, tiempo transcurrido y estimación de lo que falta",
   "author": {
     "name": "Guillermo Albert"

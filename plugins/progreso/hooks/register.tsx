@@ -2,7 +2,18 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
 import type { ProgresoTask } from '../types'
-import { agentsLabel, estimate, fromTodos, minutes, progress, range, setStatus } from './lib'
+import {
+  agentsLabel,
+  estimate,
+  fromTodos,
+  isPlanPath,
+  minutes,
+  parsePlan,
+  planToTasks,
+  progress,
+  range,
+  setStatus,
+} from './lib'
 
 const tasks = atom({ plugin: 'progreso', key: 'tasks' } as const, [])
 const planStartedAt = atom({ plugin: 'progreso', key: 'planStartedAt' } as const, null)
@@ -10,6 +21,8 @@ const agents = atom({ plugin: 'progreso', key: 'agents' } as const, {})
 const waiting = atom({ plugin: 'progreso', key: 'waiting' } as const, false)
 const now = atom({ plugin: 'progreso', key: 'now' } as const, 0)
 const hidden = atom({ plugin: 'progreso', key: 'hidden' } as const, false)
+// De dónde sale el plan: la lista de tareas de Claude o un .md con casillas
+const fuente = atom({ plugin: 'progreso', key: 'fuente' } as const, null)
 
 const PANE = 'progreso'
 const LINGER_MS = 10 * 60_000 // la banda sigue 10 min tras terminar el plan
@@ -52,6 +65,7 @@ export const register: Register = on => {
       return { text: arg === 'ocultar' ? 'Banda de progreso oculta.' : 'Banda de progreso visible.' }
     }
     if (arg === 'reiniciar') {
+      await update($, fuente, () => null)
       await update($, tasks, () => [])
       await update($, planStartedAt, () => null)
       return { text: 'Progreso reiniciado.' }
@@ -65,6 +79,7 @@ export const register: Register = on => {
     const ran = await next(e)
     if (ran.deny === undefined && !ran.isError) {
       const t = await touchPlan($)
+      await update($, fuente, () => 'tareas')
       await update($, tasks, list => fromTodos(list, e.todos, t))
     }
     return ran
@@ -74,6 +89,7 @@ export const register: Register = on => {
     const ran = await next(e)
     if (ran.deny === undefined && !ran.isError) {
       const t = await touchPlan($)
+      await update($, fuente, () => 'tareas')
       const r = ran.result as { task?: { id?: string } } | undefined
       const id = r?.task?.id ?? /#(\d+)/.exec(ran.text ?? '')?.[1] ?? `t${t}`
       await update($, tasks, list => {
@@ -98,6 +114,37 @@ export const register: Register = on => {
         })
       })
     }
+    return ran
+  })
+
+  // Planes en Markdown con casillas (p. ej. docs/superpowers/plans/*.md): se
+  // siguen cuando Claude los lee o los edita, si no hay lista de tareas activa
+  on('tool.call', async ($, e, next) => {
+    const ran = await next(e)
+    const tool = String(e.tool)
+    if (!['Read', 'Write', 'Edit', 'MultiEdit'].includes(tool) || ran.deny !== undefined || ran.isError) {
+      return ran
+    }
+    const path = (e as { file_path?: unknown }).file_path
+    if (typeof path !== 'string' || !isPlanPath(path)) return ran
+    let md: string
+    try {
+      md = await $.fs.read(path)
+    } catch {
+      return ran
+    }
+    const items = parsePlan(md)
+    if (items.length < 2) return ran
+    const t = await $.clock.now()
+    const list = await read($, tasks)
+    const src = await read($, fuente)
+    const isOurs = src === `plan:${path}`
+    if (src === 'tareas' && !isPlanOver(list, t)) return ran
+    if (!isOurs && tool === 'Read' && src !== null && !isPlanOver(list, t)) return ran
+    await touchPlan($)
+    if (!isOurs) await update($, planStartedAt, () => t)
+    await update($, fuente, () => `plan:${path}`)
+    await update($, tasks, prev => planToTasks(items, isOurs ? prev : [], t))
     return ran
   })
 
@@ -139,7 +186,19 @@ export const register: Register = on => {
     const list = await read($, tasks)
     await read($, now) // tic del reloj
     const t = await $.clock.now()
-    if (isPlanOver(list, t)) return below
+    const agentsOnly = agentsLabel(await read($, agents))
+    if (isPlanOver(list, t)) {
+      if (agentsOnly === '') return below
+      const { Box, Text } = $.ui.resolve(e)
+      return (
+        <Box flexDirection="column">
+          <Text color="cyan" wrap="truncate-end">
+            {agentsOnly}
+          </Text>
+          {below}
+        </Box>
+      )
+    }
 
     const p = progress(list)
     const started = await read($, planStartedAt)
