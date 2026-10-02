@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Instala o actualiza los mods de claude-mods para el usuario actual.
-# Uso: bash instalar.sh            (instala todos)
+# Uso: bash instalar.sh            (instala o actualiza todos los mods del repo)
 #      bash instalar.sh centinela  (solo los indicados)
 set -euo pipefail
 
 MARKET="claude-mods"
 REPO="GuillermoAlbert/claude-mods"
-MODS=("${@:-centinela}")
+RAW="https://raw.githubusercontent.com/$REPO/main/.claude-plugin/marketplace.json"
 
 command -v claude >/dev/null || { echo "No encuentro 'claude' en el PATH"; exit 1; }
 
@@ -36,9 +36,21 @@ else
   claude plugin marketplace add "$REPO"
 fi
 
-# 3. Instalar (o reinstalar para actualizar) cada mod
+# 3. Qué mods instalar: los indicados, o todos los que lista el marketplace
+if [ "$#" -gt 0 ]; then
+  MODS=("$@")
+else
+  mapfile -t MODS < <(curl -fsSL "$RAW" | python3 -c 'import json,sys; print("\n".join(p["name"] for p in json.load(sys.stdin)["plugins"]))')
+fi
+
+# 4. Instalar los nuevos y actualizar los que ya estaban
+INSTALLED="$(claude plugin list 2>/dev/null || true)"
 for mod in "${MODS[@]}"; do
-  claude plugin install "$mod@$MARKET" || claude plugin update "$mod@$MARKET"
+  if grep -q "$mod@$MARKET" <<<"$INSTALLED"; then
+    claude plugin update "$mod@$MARKET"
+  else
+    claude plugin install "$mod@$MARKET"
+  fi
   echo "✓ $mod"
 done
 
