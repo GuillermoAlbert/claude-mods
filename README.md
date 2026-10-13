@@ -11,7 +11,7 @@ Mods para Claude Code: plugins de *function hooks* en TypeScript que se ejecutan
 | [traspaso](#traspaso) | Documento de traspaso y prompt para seguir antes de quedarse sin contexto, cuota o caché; avisos al móvil |
 | [progreso](#progreso) | Fase del plan, barra por fases, subagentes, tiempo y estimación |
 | [escudo](#escudo) | Oculta a Claude DNI, NIE, IBAN, teléfonos, emails y claves |
-| [subagentes](#subagentes) | Sonnet por defecto para los subagentes, salvo que Claude elija otro |
+| [subagentes](#subagentes) | Obliga a Claude a elegir el modelo de cada subagente (Sonnet, Haiku, Opus o Fable) |
 
 ## Instalar y actualizar
 
@@ -131,13 +131,15 @@ Para máxima seguridad, trabaja con datos anonimizados en desarrollo y deja el e
 
 ## subagentes
 
-- Cuando Claude lanza un subagente genérico sin elegir modelo, se usa Sonnet (gasta bastante menos cuota que Opus). Si Claude elige otro, se respeta; los tipos de subagente con modelo propio, también.
-- El propio mod le explica a Claude la regla, sin tocar tu `CLAUDE.md`: Sonnet por defecto; Opus para interfaz, seguridad, migraciones de datos, concurrencia, arquitectura y cambios difíciles de deshacer; la revisión final de un plan largo con Fable, o con Opus si Fable no está disponible.
+- Claude tiene que indicar el modelo de cada subagente que lanza. Si se le olvida, la llamada se rechaza con el reparto delante y la repite eligiendo uno; los `fork` no lo necesitan (heredan el de la sesión).
+- El reparto, que el propio mod le explica a Claude sin tocar tu `CLAUDE.md`: Sonnet por defecto; Haiku para lo fácil y mecánico y para investigar; Opus para lo delicado (interfaz, seguridad, migraciones de datos, concurrencia, arquitectura, cambios difíciles de deshacer); Fable solo para la revisión final de un plan, o Opus si Fable no está disponible.
+- Con `exigir` desactivado vuelve el comportamiento anterior: si Claude no elige, un subagente genérico usa el `modelo` por defecto.
 
 | Ajuste | Por defecto |
 | --- | --- |
-| `modelo` (`sonnet`, `haiku`, `opus`, `fable`) | `sonnet` |
-| `instrucciones` (explicar la regla a Claude) | sí |
+| `exigir` (rechazar el subagente sin modelo) | sí |
+| `modelo` (`sonnet`, `haiku`, `opus`, `fable`), solo sin `exigir` | `sonnet` |
+| `instrucciones` (explicar el reparto a Claude) | sí |
 
 ## Desarrollo
 

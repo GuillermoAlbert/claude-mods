@@ -33,7 +33,7 @@
     {
       "name": "subagentes",
       "source": "./plugins/subagentes",
-      "description": "Los subagentes usan Sonnet por defecto; Claude recibe la regla para elegir Opus o Fable cuando toca"
+      "description": "Obliga a Claude a elegir el modelo de cada subagente según el reparto Sonnet/Haiku/Opus/Fable"
     }
   ]
 }
