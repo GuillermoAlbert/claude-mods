@@ -12,6 +12,7 @@ Mods para Claude Code: plugins de *function hooks* en TypeScript que se ejecutan
 | [progreso](#progreso) | Fase del plan, barra por fases, subagentes, tiempo y estimación |
 | [escudo](#escudo) | Oculta a Claude DNI, NIE, IBAN, teléfonos, emails y claves |
 | [subagentes](#subagentes) | Obliga a Claude a elegir el modelo de cada subagente (Sonnet, Haiku, Opus o Fable) |
+| [tablero](#tablero) | Resumen del tablero Kanvas del repo al empezar cada sesión y la forma de trabajar con él |
 
 ## Instalar y actualizar
 
@@ -140,6 +141,15 @@ Para máxima seguridad, trabaja con datos anonimizados en desarrollo y deja el e
 | `exigir` (rechazar el subagente sin modelo) | sí |
 | `modelo` (`sonnet`, `haiku`, `opus`, `fable`), solo sin `exigir` | `sonnet` |
 | `instrucciones` (explicar el reparto a Claude) | sí |
+
+## tablero
+
+Para trabajar con un tablero [Kanvas](https://github.com/XMihura/Kanvas) por repo, compartido entre tú y tus sesiones: tú apruebas y revisas en el navegador o en el móvil; Claude empieza, pregunta, entrega a revisión y propone.
+
+- Al empezar cada sesión, Claude recibe un resumen de su tablero: preguntas que te esperan, en curso, en revisión y lo listo para empezar.
+- La skill `tablero` le enseña el protocolo (`start` → trabajo → `finish` con resumen; `ask` si necesita algo de ti; solo tú apruebas y cierras), las fechas (`📅 Desde el AAAA-MM-DD`, `⏰ Antes del AAAA-MM-DD`) y una regla de confidencialidad: Kanvas no tiene contraseña, así que en las tarjetas no van importes, nombres ni datos personales.
+
+Es un plugin normal (skill y hook de inicio de sesión), no un *function hook*: no necesita los mods activados. **No trae Kanvas:** espera que la máquina tenga un comando `kanvas` que ya apunte al tablero del repo actual (el CLI de Kanvas o un envoltorio tuyo) y que tenga el subcomando `kanvas resumen --hook`, silencioso si el repo no tiene tablero. Sin ese comando, el mod no hace nada.
 
 ## Desarrollo
 

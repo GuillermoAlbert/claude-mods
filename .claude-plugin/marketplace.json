@@ -34,6 +34,11 @@
       "name": "subagentes",
       "source": "./plugins/subagentes",
       "description": "Obliga a Claude a elegir el modelo de cada subagente según el reparto Sonnet/Haiku/Opus/Fable"
+    },
+    {
+      "name": "tablero",
+      "source": "./plugins/tablero",
+      "description": "Cada sesión arranca con el resumen del tablero Kanvas de su repo y sabe trabajar con él: empezar, preguntar, entregar a revisión y proponer"
     }
   ]
 }

@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v kanvas >/dev/null 2>&1 && kanvas resumen --hook || true",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

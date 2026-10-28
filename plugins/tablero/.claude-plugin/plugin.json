@@ -1,0 +1,8 @@
+{
+  "name": "tablero",
+  "version": "0.1.0",
+  "description": "Cada sesión arranca con el resumen del tablero Kanvas de su repo y sabe trabajar con él: empezar, preguntar, entregar a revisión y proponer",
+  "author": {
+    "name": "Guillermo Albert"
+  }
+}
