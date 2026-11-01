@@ -198,21 +198,25 @@ export const isLedgerPath = (path: string): boolean =>
 
 export const ledgerRoot = (path: string): string => path.split(/[\\/]\.superpowers[\\/]/)[0]!
 
-export const parseLedger = (md: string): { planPath: string | null; complete: Set<number> } => {
+// Número de tarea: entero ("Task 3") o con subtarea y sufijo ("Task 1.0b", "Task 3.6b")
+const TASK_ID = String.raw`\d+(?:\.\d+)?[a-z]?`
+
+export const parseLedger = (md: string): { planPath: string | null; complete: Set<string> } => {
   const plan = /^#\s*SDD ledger\s*[—-]+\s*plan:\s*(.+?)\s*$/im.exec(md)
-  const complete = new Set<number>()
-  for (const m of md.matchAll(/^\s*[-*]?\s*Task\s+(\d+)\s*:\s*complete\b/gim)) complete.add(Number(m[1]))
+  const complete = new Set<string>()
+  for (const m of md.matchAll(new RegExp(String.raw`^\s*[-*]?\s*Task\s+(${TASK_ID})\s*:\s*complete\b`, 'gim')))
+    complete.add(m[1]!.toLowerCase())
   return { planPath: plan ? plan[1]!.replace(/^`|`$/g, '') : null, complete }
 }
 
-export const planTaskTitles = (md: string): { n: number; title: string }[] =>
-  [...md.matchAll(/^#{2,4}\s+Task\s+(\d+)\s*[:.\-–]\s*(.+?)\s*$/gim)].map(m => ({
-    n: Number(m[1]),
+export const planTaskTitles = (md: string): { id: string; title: string }[] =>
+  [...md.matchAll(new RegExp(String.raw`^#{2,4}\s+Task\s+(${TASK_ID})\s*[:.\-–]\s*(.+?)\s*$`, 'gim'))].map(m => ({
+    id: m[1]!.toLowerCase(),
     title: m[2]!.replace(/\*\*|`/g, ''),
   }))
 
 export const ledgerItems = (
-  titles: readonly { n: number; title: string }[],
-  complete: ReadonlySet<number>,
+  titles: readonly { id: string; title: string }[],
+  complete: ReadonlySet<string>,
 ): PlanItem[] =>
-  titles.map(t => ({ phase: 1, step: t.n, text: `Task ${t.n}: ${t.title}`, done: complete.has(t.n) }))
+  titles.map((t, i) => ({ phase: 1, step: i + 1, text: `Task ${t.id}: ${t.title}`, done: complete.has(t.id) }))

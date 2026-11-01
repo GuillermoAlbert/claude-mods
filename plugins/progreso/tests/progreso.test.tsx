@@ -108,16 +108,27 @@ describe('lib', () => {
     const ledger = '# SDD ledger — plan: docs/superpowers/plans/bot.md\nTask 1: complete (commits a1..b2, review clean)\nTask 2: fix round 1/5 (2 addressed, 1 open)\n'
     const l = parseLedger(ledger)
     expect(l.planPath).toBe('docs/superpowers/plans/bot.md')
-    expect([...l.complete]).toEqual([1])
+    expect([...l.complete]).toEqual(['1'])
     const titles = planTaskTitles('# Plan\n### Task 1: Modelo\n- [ ] x\n### Task 2: API\n### Task 3: Docs\n')
     expect(titles).toEqual([
-      { n: 1, title: 'Modelo' },
-      { n: 2, title: 'API' },
-      { n: 3, title: 'Docs' },
+      { id: '1', title: 'Modelo' },
+      { id: '2', title: 'API' },
+      { id: '3', title: 'Docs' },
     ])
     const tasks = planToTasks(ledgerItems(titles, l.complete), [], 0)
     expect(progress(tasks).label).toBe('Tarea 2 / 3')
     expect(isLedgerPath('/r/.superpowers/sdd/bot/progress.md')).toBe(true)
+  })
+
+  test('el registro admite tareas con subnúmero y sufijo (Task 1.0b, 3.6b)', () => {
+    const titles = planTaskTitles('### Task 1.0: Prep\n### Task 1.0b: Jobs\n### Task 1.1: Dorados\n### Task 1.10: Semilla\n### Task 2. Viejo estilo\n')
+    expect(titles.map(t => t.id)).toEqual(['1.0', '1.0b', '1.1', '1.10', '2'])
+    expect(titles[4]!.title).toBe('Viejo estilo')
+    const l = parseLedger('# SDD ledger — plan: p.md\nTask 1.0: complete (x)\nTask 1.1: complete (y)\nTask 1.10: fix round 1/5\n')
+    expect([...l.complete]).toEqual(['1.0', '1.1'])
+    const tasks = planToTasks(ledgerItems(titles, l.complete), [], 0)
+    expect(progress(tasks).label).toBe('Tarea 2 / 5')
+    expect(new Set(tasks.map(t => t.id)).size).toBe(5)
   })
 
   test('TodoWrite conserva los tiempos de cada tarea', () => {
