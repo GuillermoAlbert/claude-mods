@@ -184,6 +184,45 @@ describe('banda', () => {
     await ui.unmount()
   })
 
+  test('sigue un plan cuando se cambia por la shell (Bash)', async ($, on) => {
+    mock.clock(on, { now: 0 })
+    on('ui.render', () => ({ type: 'Box', props: {}, children: [] }) as never)
+    let md = '## Fase 1\n- [x] a\n- [ ] b\n## Fase 2\n- [ ] c\n'
+    on('fs.read', () => ({ value: md }) as never)
+    on('tool.call', { tool: 'Read' }, () => ({ result: {} }) as never)
+    on('tool.call', { tool: 'Bash' }, () => ({ result: {} }) as never)
+    await $.tool.call({ tool: 'Read', file_path: '/r/docs/plans/plan.md' } as never)
+    const label = async () => {
+      const ui = await $.ui.mount({ plugin: 'progreso', surface: 'terminal', ...BAND })
+      const text = (await ui.find({ type: 'Text', text: /Fase/ }))?.text
+      await ui.unmount()
+      return text
+    }
+    expect(await label()).toMatch(/Fase 1\.2 \/ 2/)
+    // un Bash que no toca nada no cambia nada
+    await $.tool.call({ tool: 'Bash', command: 'ls' } as never)
+    expect(await label()).toMatch(/Fase 1\.2 \/ 2/)
+    // la shell marca una casilla
+    md = '## Fase 1\n- [x] a\n- [x] b\n## Fase 2\n- [ ] c\n'
+    await $.tool.call({ tool: 'Bash', command: "sed -i 's/\\[ \\] b/[x] b/' plan.md" } as never)
+    expect(await label()).toMatch(/Fase 2\.1 \/ 2/)
+  })
+
+  test('un comando Bash que cita un registro nuevo lo engancha', async ($, on) => {
+    mock.clock(on, { now: 0 })
+    on('ui.render', () => ({ type: 'Box', props: {}, children: [] }) as never)
+    const ledger = '# SDD ledger — plan: /r/docs/plans/p.md\nTask 1: complete\n'
+    const plan = '### Task 1: Uno\n### Task 2: Dos\n### Task 3: Tres\n'
+    on('fs.read', (_$: unknown, e: { path: string }) => ({ value: e.path.endsWith('progress.md') ? ledger : plan }) as never)
+    on('tool.call', { tool: 'Bash' }, () => ({ result: {} }) as never)
+    await $.tool.call({ tool: 'Bash', command: 'echo "Task 1: complete" >> /r/.superpowers/sdd/p/progress.md' } as never)
+    const ui = await $.ui.mount({ plugin: 'progreso', surface: 'terminal', ...BAND })
+    const row = await ui.find({ type: 'Text', text: /Tarea|Fase/ })
+    expect(row?.text).toMatch(/Tarea 2 \/ 3/)
+    expect(row?.text).toMatch(/1\/3/)
+    await ui.unmount()
+  })
+
   test('muestra los subagentes aunque no haya plan', async ($, on) => {
     mock.clock(on, { now: 0 })
     on('ui.render', () => ({ type: 'Box', props: {}, children: [] }) as never)

@@ -96,7 +96,7 @@ Cuando hay un plan en marcha, aparece encima del prompt. El plan sale de:
 
 - la lista de tareas de Claude (TaskCreate/TaskUpdate o TodoWrite), o
 - el registro de **superpowers** (`.superpowers/sdd/<plan>/progress.md`, con sus líneas `Task N: complete`) junto con las `### Task N:` del plan, cuando se usa *subagent-driven-development*, o
-- un plan en Markdown con casillas (`- [ ]` / `- [x]`) dentro de una carpeta `plans/` o similar (como `docs/superpowers/plans/…md`), que se sigue cuando Claude lo lee o lo edita. Cada encabezado con casillas es una fase y cada casilla, un paso.
+- un plan en Markdown con casillas (`- [ ]` / `- [x]`) dentro de una carpeta `plans/` o similar (como `docs/superpowers/plans/…md`), que se sigue cuando Claude lo lee o lo edita, o cuando un comando Bash lo cambia (se vuelve a leer la fuente activa y las rutas que cite el comando). Cada encabezado con casillas es una fase y cada casilla, un paso.
 
 ```
 Fase 4.2 / 9 ▓▓▓│▓▓▓│▓▓▓│▓▒░│░░░…  12/27 · 1h12 · quedan ~40–75 min · ⏸ esperando tu respuesta

@@ -54,6 +54,53 @@ const isPlanOver = (list: readonly ProgresoTask[], t: number) =>
   (list.every(x => x.status === 'completed') &&
     t - Math.max(...list.map(x => x.doneAt ?? 0)) > LINGER_MS)
 
+// Rutas absolutas a .md dentro de un comando de shell
+const MD_PATH = /\/[^\s"'`<>|;&()]+\.md\b/gi
+
+// Último contenido leído por ruta, para no repintar si la shell no cambió nada
+const seen = new Map<string, string>()
+
+// Lee un plan o un registro de superpowers y actualiza las tareas
+async function followFile($: EngineInterface, path: string, isRead: boolean, dedupe = false) {
+  const isLedger = isLedgerPath(path)
+  if (!isLedger && !isPlanPath(path)) return
+  let items
+  try {
+    if (isLedger) {
+      // superpowers (subagent-driven-development): el registro manda
+      const ledger = parseLedger(await $.fs.read(path))
+      if (!ledger.planPath) return
+      const planPath = ledger.planPath.startsWith('/')
+        ? ledger.planPath
+        : `${ledgerRoot(path)}/${ledger.planPath}`
+      items = ledgerItems(planTaskTitles(await $.fs.read(planPath)), ledger.complete)
+    } else {
+      items = parsePlan(await $.fs.read(path))
+    }
+  } catch {
+    return
+  }
+  if (items.length < 2) return
+  if (dedupe) {
+    const sig = JSON.stringify(items)
+    if (seen.get(path) === sig) return
+    seen.set(path, sig)
+  }
+  const t = await $.clock.now()
+  const list = await read($, tasks)
+  const src = await read($, fuente)
+  const key = isLedger ? `sdd:${path}` : `plan:${path}`
+  const isOurs = src === key
+  if (src === 'tareas' && !isPlanOver(list, t)) return
+  // con un registro de superpowers activo, leer el plan no cambia nada
+  if (!isLedger && src?.startsWith('sdd:') && !isPlanOver(list, t)) return
+  if (!isOurs && isRead && src !== null && !isPlanOver(list, t)) return
+  await touchPlan($)
+  if (!isOurs) await update($, planStartedAt, () => t)
+  await update($, fuente, () => key)
+  await update($, tasks, prev => planToTasks(items, isOurs ? prev : [], t))
+}
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.command.register({
@@ -70,6 +117,7 @@ export const register: Register = on => {
       return { text: arg === 'ocultar' ? 'Banda de progreso oculta.' : 'Banda de progreso visible.' }
     }
     if (arg === 'reiniciar') {
+      seen.clear()
       await update($, fuente, () => null)
       await update($, tasks, () => [])
       await update($, planStartedAt, () => null)
@@ -127,43 +175,24 @@ export const register: Register = on => {
   on('tool.call', async ($, e, next) => {
     const ran = await next(e)
     const tool = String(e.tool)
-    if (!['Read', 'Write', 'Edit', 'MultiEdit'].includes(tool) || ran.deny !== undefined || ran.isError) {
-      return ran
-    }
-    const path = (e as { file_path?: unknown }).file_path
-    if (typeof path !== 'string') return ran
-    const isLedger = isLedgerPath(path)
-    if (!isLedger && !isPlanPath(path)) return ran
-    let items
-    try {
-      if (isLedger) {
-        // superpowers (subagent-driven-development): el registro manda
-        const ledger = parseLedger(await $.fs.read(path))
-        if (!ledger.planPath) return ran
-        const planPath = ledger.planPath.startsWith('/')
-          ? ledger.planPath
-          : `${ledgerRoot(path)}/${ledger.planPath}`
-        items = ledgerItems(planTaskTitles(await $.fs.read(planPath)), ledger.complete)
-      } else {
-        items = parsePlan(await $.fs.read(path))
+    if (ran.deny !== undefined || ran.isError) return ran
+    if (['Read', 'Write', 'Edit', 'MultiEdit'].includes(tool)) {
+      const path = (e as { file_path?: unknown }).file_path
+      if (typeof path === 'string') await followFile($, path, tool === 'Read')
+    } else if (tool === 'Bash') {
+      // cambios hechos por la shell (echo >>, sed -i, git merge…): vuelve a leer
+      // la fuente activa y las rutas de plan/registro que cite el comando
+      const src = await read($, fuente)
+      const paths = new Set<string>()
+      if (src?.startsWith('plan:') || src?.startsWith('sdd:')) paths.add(src.slice(4))
+      const command = (e as { command?: unknown }).command
+      if (typeof command === 'string') {
+        for (const m of command.matchAll(MD_PATH)) {
+          if (m[0].startsWith('/') && (isLedgerPath(m[0]) || isPlanPath(m[0]))) paths.add(m[0])
+        }
       }
-    } catch {
-      return ran
+      for (const path of paths) await followFile($, path, false, true)
     }
-    if (items.length < 2) return ran
-    const t = await $.clock.now()
-    const list = await read($, tasks)
-    const src = await read($, fuente)
-    const key = isLedger ? `sdd:${path}` : `plan:${path}`
-    const isOurs = src === key
-    if (src === 'tareas' && !isPlanOver(list, t)) return ran
-    // con un registro de superpowers activo, leer el plan no cambia nada
-    if (!isLedger && src?.startsWith('sdd:') && !isPlanOver(list, t)) return ran
-    if (!isOurs && tool === 'Read' && src !== null && !isPlanOver(list, t)) return ran
-    await touchPlan($)
-    if (!isOurs) await update($, planStartedAt, () => t)
-    await update($, fuente, () => key)
-    await update($, tasks, prev => planToTasks(items, isOurs ? prev : [], t))
     return ran
   })
 
