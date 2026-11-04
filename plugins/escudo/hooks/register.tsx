@@ -92,7 +92,6 @@ export const register: Register = (on, options) => {
     if (OUTBOUND.has(String(e.tool))) return next(e)
     const v = await loadVault($)
     if (Object.keys(v.toReal).length === 0) return next(e)
-    const real = unmaskDeep(v, e)
-    return next(real)
+    return next(unmaskDeep(v, e))
   })
 }

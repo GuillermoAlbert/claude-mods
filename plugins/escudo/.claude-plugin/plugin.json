@@ -1,6 +1,6 @@
 {
   "name": "escudo",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Oculta a Claude los datos personales (DNI, NIE, IBAN, teléfonos, emails, claves) cambiándolos por falsos válidos y los restaura al ejecutar, todo en tu máquina",
   "author": { "name": "Guillermo Albert" },
   "userConfig": {
@@ -25,7 +25,7 @@
     "email": {
       "type": "boolean",
       "title": "Emails",
-      "description": "Cambia la parte antes de la @ y conserva el dominio",
+      "description": "Cambia la parte antes de la @ y conserva el dominio; deja los de prueba (.test, example.com…) y los de servicio (git@, noreply@)",
       "default": true
     },
     "secretos": {

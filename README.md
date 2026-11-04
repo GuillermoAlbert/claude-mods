@@ -124,6 +124,8 @@ Antes de que Claude lea nada (tus mensajes, archivos, salidas de comandos, corre
 Cuando Claude ejecuta algo con un falso (un `grep`, una edición, un comando), el mod lo cambia por el real justo antes de ejecutarlo. La tabla de equivalencias vive solo en tu máquina. Los datos reales no salen nunca hacia Anthropic.
 
 - Solo se tapan DNI, NIE e IBAN válidos, para no tocar referencias que se les parezcan.
+- No se tapan los emails de prueba (`.test`, `.example`, `.invalid`, `.localhost`, `example.com`) ni los de servicio (`git@`, `noreply@`, `users.noreply.github.com`).
+- Un falso solo se restaura si va entero: dentro de un número o una palabra más larga (un hash, un id) no se toca. Y una orden sin falsos llega **intacta**, sin reescribirse, así que el modo automático puede aprobarla.
 - A las búsquedas web (WebFetch, WebSearch) no se les devuelven los reales. A los conectores sí, porque normalmente los necesitan (responder a un correo, por ejemplo).
 - **Límites**: nombres y direcciones en texto libre no se detectan. Los teléfonos son números de 9 cifras que empiezan por 6–9, así que puede tapar algún número que no sea un teléfono (se restaura igual al ejecutar). En la pantalla verás los falsos en lo que lee Claude.
 - `/escudo` dice cuántos datos ha ocultado. Cada tipo se puede desactivar en `/config`.

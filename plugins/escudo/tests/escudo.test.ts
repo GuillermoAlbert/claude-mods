@@ -75,6 +75,30 @@ describe('lib', () => {
     const input = { tool: 'Edit', old_string: `dni: ${v.toFake[DNI]}`, nested: [v.toFake[MAIL]] }
     expect(unmaskDeep(v, input)).toEqual({ tool: 'Edit', old_string: `dni: ${DNI}`, nested: [MAIL] })
   })
+
+  test('no cambia un falso que va dentro de un número o palabra más larga', () => {
+    const v = emptyVault('sal')
+    mask(v, `tel ${TEL}`, ALL)
+    const fakeCompact = v.toFake[TEL]!.replace(/\D/g, '').slice(-9)
+    const text = `sha a${fakeCompact}b, id 1${fakeCompact}, ${fakeCompact}9`
+    expect(unmask(v, text)).toBe(text)
+  })
+
+  test('sin falsos, la entrada sale idéntica (misma referencia)', () => {
+    const v = emptyVault('sal')
+    mask(v, ROW, ALL)
+    const input = { tool: 'Write', file_path: '/x/plan.md', content: 'sin datos', list: ['a', { b: 'c' }] }
+    expect(unmaskDeep(v, input)).toBe(input)
+  })
+
+  test('no oculta emails de prueba ni de servicio', () => {
+    const v = emptyVault('sal')
+    const text = [
+      ['a', 'argenta.test'], ['b', 'x.example'], ['c', 'y.invalid'], ['d', 'host.localhost'], ['e', 'example.com'],
+      ['git', 'github.com'], ['noreply', 'anthropic.com'], ['123+u', 'users.noreply.github.com'],
+    ].map(p => p.join('@')).join(' ')
+    expect(mask(v, text, ALL)).toEqual({ text, count: 0 })
+  })
 })
 
 describe('mod', () => {

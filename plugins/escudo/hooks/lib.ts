@@ -171,6 +171,13 @@ const fakeFor = (kind: Kind, real: string, r: () => number): string => {
 const isValid = (kind: Kind, s: string): boolean =>
   kind === 'dni' ? isDni(s) : kind === 'nie' ? isNie(s) : kind === 'iban' ? isIbanEs(s) : true
 
+// Emails que no son de una persona: dominios reservados para pruebas (RFC 2606/6761), example.*,
+// direcciones de servicio (git@, noreply@) y las de GitHub sin respuesta. Ocultarlos no protege a
+// nadie y obliga a reescribir cada orden que los lleva.
+const SERVICE_EMAIL =
+  /^(?:git|noreply|no-reply)@|@(?:[^@]+\.)?(?:test|example|invalid|localhost)$|@example\.(?:com|org|net)$|@users\.noreply\.github\.com$/i
+export const isServiceEmail = (s: string): boolean => SERVICE_EMAIL.test(s)
+
 const remember = (v: Vault, real: string, fake: string) => {
   v.toFake[real] = fake
   v.toReal[fake] = real
@@ -205,6 +212,7 @@ export const mask = (
     if (!kind || !enabled.has(kind)) return match
     if (match in v.toReal) return match // ya es un falso
     if (!isValid(kind, match)) return match
+    if (kind === 'email' && isServiceEmail(match)) return match
     count++
     return fakeOf(v, kind, match)
   })
@@ -215,24 +223,36 @@ export const mask = (
 export const unmask = (v: Vault, text: string): string => {
   const fakes = Object.keys(v.toReal)
   if (fakes.length === 0 || text.length === 0) return text
+  // Solo falsos enteros: uno que va dentro de un número o una palabra más larga (un hash, un id) no se toca
   const re = new RegExp(
-    fakes
-      .sort((a, b) => b.length - a.length)
-      .map(f => f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-      .join('|'),
+    '(?<![A-Za-z0-9])(?:' +
+      fakes
+        .sort((a, b) => b.length - a.length)
+        .map(f => f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        .join('|') +
+      ')(?![A-Za-z0-9])',
     'g',
   )
   return text.replace(re, f => v.toReal[f] ?? f)
 }
 
 // Recorre la entrada de una herramienta y desenmascara todos sus textos
+// Si no hay ningún falso devuelve la MISMA entrada: así una escritura sin datos llega intacta (sin
+// esto el modo automático ve la entrada cambiada y no puede aprobarla).
 export const unmaskDeep = <T>(v: Vault, value: T): T => {
   if (typeof value === 'string') return unmask(v, value) as T
-  if (Array.isArray(value)) return value.map(x => unmaskDeep(v, x)) as T
+  if (Array.isArray(value)) {
+    const out = value.map(x => unmaskDeep(v, x))
+    return (out.some((x, i) => x !== value[i]) ? out : value) as T
+  }
   if (value && typeof value === 'object') {
+    let changed = false
     const out: Record<string, unknown> = {}
-    for (const [k, x] of Object.entries(value)) out[k] = unmaskDeep(v, x)
-    return out as T
+    for (const [k, x] of Object.entries(value)) {
+      out[k] = unmaskDeep(v, x)
+      if (out[k] !== x) changed = true
+    }
+    return (changed ? out : value) as T
   }
   return value
 }
